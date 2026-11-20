@@ -20,8 +20,8 @@ def get_referral_share_keyboard(bot_username: str, user_id: int) -> InlineKeyboa
     ref_link = f"https://t.me/{bot_username}?start=ref_{user_id}"
     share_caption = (
         "👋 Salom! O'zbekiston talabalari hamjamiyati — UniConnect'da 7 kunlik katta marafon boshlandi!\n\n"
-        "🎁 Top 3 talabaga qimmatbaho sovg'alar beriladi!\n"
-        "Do'stlar orttirish, tajriba almashish va sovg'alarga ega bo'lish uchun siz ham qo'shiling 👇"
+        "🎁 G'oliblar uchun ajoyib sovg'alar rasmiy kanalda e'lon qilinadi!\n"
+        "Do'stlar orttirish, tajriba almashish va marafonda qatnashish uchun siz ham qo'shiling 👇"
     )
 
     encoded_url = urllib.parse.quote(ref_link, safe="")

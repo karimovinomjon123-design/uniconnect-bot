@@ -12,26 +12,20 @@ MEDALS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8
 
 async def build_leaderboard_text(user_id: int, db: Database) -> str:
     contest = await db.get_active_contest()
-    contest_title = contest["title"] if contest else "UniConnect Marafon-Tanlovi"
+    contest_title = contest["title"] if contest else "UniConnect 7 Kunlik Marafoni"
     time_left = contest["time_left_str"] if contest else "Faol"
 
     top_users = await db.get_leaderboard(limit=10)
     user_rank, user_points, diff_top3 = await db.get_user_contest_rank(user_id)
 
-    p1 = contest.get("prize_1") if contest else "🥇 1-o'rin: Bosh sovrin"
-    p2 = contest.get("prize_2") if contest else "🥈 2-o'rin: 2-darajali sovrin"
-    p3 = contest.get("prize_3") if contest else "🥉 3-o'rin: Maxsus Merch to'plami"
-
     lines = [
-        f"🏆 <b>UniConnect — Marafon Reytingi va Sovg'alar</b>\n",
+        f"🏆 <b>UniConnect — Talabalar Reytingi (Top 10)</b>\n",
         f"🎯 <b>Tanlov:</b> {contest_title}",
         f"⏳ <b>Qolgan vaqt:</b> <code>{time_left}</code>\n",
-        "🎁 <b>TOP 3 SOVG'ALARI:</b>",
-        f"{p1}",
-        f"{p2}",
-        f"{p3}\n",
+        "🎁 <b>G'oliblarni taqdirlash:</b>",
+        "G'oliblar uchun maxsus sovg'alar va mukofotlar rasmiy kanalimiz (@uniconnectuz_official) orqali e'lon qilinadi!\n",
         "━━━━━━━━━━━━━━━━━━━━",
-        "📊 <b>HOZIRGI YETAKCHILAR RO'YXATI (TOP 10):</b>"
+        "📊 <b>HOZIRGI YETAKCHILAR RO'YXATI:</b>"
     ]
 
     if not top_users:
@@ -48,12 +42,13 @@ async def build_leaderboard_text(user_id: int, db: Database) -> str:
     lines.append(f"• To'plagan ballingiz: <b>{user_points} ta do'st</b>")
 
     if user_rank <= 3 and user_points > 0:
-        lines.append(f"🎉 <b>Ajoyib! Siz hozirda sovg'ali TOP 3 o'rindasiz! O'rningizni saqlab qoling!</b>")
+        lines.append("🎉 <b>Ajoyib! Siz hozirda yetakchi TOP 3 o'rindasiz! O'rningizni saqlab qoling!</b>")
     else:
-        lines.append(f"🎯 Sovg'ali <b>TOP 3</b> talikka kirish uchun yana kamida <b>{diff_top3} ta</b> do'st taklif qilishingiz kerak!")
+        lines.append(f"🎯 Yetakchi <b>TOP 3</b> talikka kirish uchun yana kamida <b>{diff_top3} ta</b> do'st taklif qilishingiz kerak!")
 
     return "\n".join(lines)
 
+@router.message(F.text == "🏆 Reyting (Top 10)")
 @router.message(F.text == "🏆 Reyting va Sovg'alar (Top 3)")
 async def show_leaderboard(message: Message, db: Database):
     text = await build_leaderboard_text(message.from_user.id, db)

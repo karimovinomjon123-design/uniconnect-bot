@@ -7,7 +7,7 @@ def get_main_keyboard(is_admin: bool = False) -> ReplyKeyboardMarkup:
             KeyboardButton(text="👥 Do'stlarni taklif qilish"),
         ],
         [
-            KeyboardButton(text="🏆 Reyting va Sovg'alar (Top 3)"),
+            KeyboardButton(text="🏆 Reyting (Top 10)"),
         ],
         [
             KeyboardButton(text="📊 Mening profilim"),

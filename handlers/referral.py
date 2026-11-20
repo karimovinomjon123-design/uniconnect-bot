@@ -34,7 +34,7 @@ async def get_referral_content(bot: Bot, user_id: int, db: Database):
         "💡 <b>Qoidalar:</b>\n"
         "1. Do'stingiz botga kirib, rasmiy kanal va guruhimizga a'zo bo'lgandagina sizga <b>+1 ball</b> qo'shiladi.\n"
         "2. Agar taklif qilingan a'zo guruh yoki kanaldan chiqib ketsa, hisobingizdan ball chegiriladi (adolatli tanlov uchun).\n"
-        "3. Tanlov yakunida <b>Top 3</b> talaba qimmatbaho sovg'alar bilan taqdirlanadi! 🎁"
+        "3. Tanlov yakunida g'oliblar uchun maxsus sovg'alar rasmiy kanalda e'lon qilinadi va taqdim etiladi! 🎁"
     )
 
     markup = get_referral_share_keyboard(bot_username, user_id)

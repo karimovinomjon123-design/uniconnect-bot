@@ -42,7 +42,7 @@ async def cmd_start(message: Message, command: CommandObject, bot: Bot, db: Data
             f"👋 <b>Assalomu alaykum, {user.full_name}!</b>\n\n"
             "🌟 <b>UniConnect</b> — O'zbekiston talabalari hamjamiyatining rasmiy botiga xush kelibsiz!\n\n"
             "🚀 <b>Hozirda 7 kunlik katta talabalar marafon-konkursi o'tkazilmoqda!</b>\n"
-            "🎁 <b>Top 3</b> talabaga qimmatbaho sovg'alar topshiriladi!\n\n"
+            "🎁 G'oliblar uchun maxsus sovg'alar rasmiy kanalimiz orqali e'lon qilinadi!\n\n"
             "⚠️ <b>Botdan to'liq foydalanish, do'stlaringizni taklif qilish va tanlovda qatnashish uchun "
             "rasmiy kanal va guruhimizga a'zo bo'ling:</b>"
         )
