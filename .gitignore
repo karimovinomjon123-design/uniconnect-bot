@@ -1,0 +1,17 @@
+# Maxfiy ma'lumotlar va kalitlar (Hech qachon internetga chiqmasligi shart!)
+.env
+
+# Ma'lumotlar bazasi
+*.db
+*.db-journal
+test_*.db
+
+# Python kesh fayllari
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Muhit va virtualenv
+venv/
+.venv/
+env/
