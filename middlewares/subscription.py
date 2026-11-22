@@ -42,7 +42,7 @@ class SubscriptionCheckMiddleware(BaseMiddleware):
             return await handler(event, data)
 
         # Adminlar uchun tekshiruv shart emas (istisno)
-        if user_id in config.ADMIN_IDS:
+        if config.is_admin(user_id):
             return await handler(event, data)
 
         # Barcha majburiy kanal va guruhlarni tekshiramiz

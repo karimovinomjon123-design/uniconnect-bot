@@ -73,7 +73,7 @@ async def cmd_start(message: Message, command: CommandObject, bot: Bot, db: Data
         except Exception as e:
             logger.warning(f"Taklifchiga xabar yuborishda xato: {e}")
 
-    is_admin = user.id in config.ADMIN_IDS
+    is_admin = config.is_admin(user.id)
     await message.answer(
         f"Assalomu alaykum, {user.full_name}!\n\n"
         "🌟 <b>UniConnect UZ</b> talabalar hamjamiyatiga xush kelibsiz.\n"

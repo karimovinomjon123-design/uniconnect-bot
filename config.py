@@ -8,17 +8,28 @@ load_dotenv(BASE_DIR / ".env")
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 # Administratorlar Telegram ID raqamlari
-admin_ids_str = os.getenv("ADMIN_IDS", "7557420301,8786525548")
+admin_ids_str = os.getenv("ADMIN_IDS", "").strip()
 ADMIN_IDS: list[int] = []
-for aid in admin_ids_str.split(","):
-    aid_clean = aid.strip()
-    if aid_clean.isdigit():
-        ADMIN_IDS.append(int(aid_clean))
+if admin_ids_str:
+    for aid in admin_ids_str.replace(";", ",").replace(" ", ",").split(","):
+        aid_clean = aid.strip()
+        if aid_clean.isdigit():
+            val = int(aid_clean)
+            if val not in ADMIN_IDS:
+                ADMIN_IDS.append(val)
 
-# Asosiy adminlar doimo ruxsatga ega bo'lishi kafolatlanadi
-for default_admin in [7557420301, 8786525548]:
-    if default_admin not in ADMIN_IDS:
-        ADMIN_IDS.append(default_admin)
+# Agar ADMIN_IDS berilmagan bo'lsa, zaxira sifatida standart adminlar
+if not ADMIN_IDS:
+    ADMIN_IDS = [8786525548, 7557420301]
+
+def is_admin(user_id: int | str | None) -> bool:
+    """Foydalanuvchining admin ekanligini xavfsiz va to'liq tekshirish"""
+    if user_id is None:
+        return False
+    try:
+        return int(user_id) in ADMIN_IDS
+    except (ValueError, TypeError):
+        return False
 
 # Majburiy a'zo bo'lish kanali va guruhi
 REQUIRED_CHANNEL = os.getenv("REQUIRED_CHANNEL", "@uniconnectuz_official").strip()

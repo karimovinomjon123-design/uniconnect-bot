@@ -83,10 +83,11 @@ async def main():
         )
         return
 
-    # Ma'lumotlar bazasini ishga tushirish va jadvallarni yangilash
-    db = Database(config.DB_PATH)
+    # Ma'lumotlar bazasini ishga tushirish (PostgreSQL / SQLite dual-engine)
+    db = Database()
     await db.init_db()
-    logger.info(f"SQLite ma'lumotlar bazasi tayyor: {config.DB_PATH}")
+    engine_name = "PostgreSQL (Neon)" if config.DATABASE_URL else "SQLite"
+    logger.info(f"Ma'lumotlar bazasi ({engine_name}) muvaffaqiyatli ishga tushdi.")
 
     # Server health-check ni yoqish (agar bulutli hostingda bo'lsa)
     web_runner = await start_health_server()
@@ -137,6 +138,8 @@ async def main():
         if web_runner:
             await web_runner.cleanup()
         await bot.session.close()
+        if hasattr(db, "close"):
+            await db.close()
         logger.info("Bot sessiyasi yopildi.")
 
 if __name__ == "__main__":

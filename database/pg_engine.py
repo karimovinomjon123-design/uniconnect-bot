@@ -418,6 +418,23 @@ class PostgresDatabase:
 
         return None, contest
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    async def get_active_participants_count(self) -> int:
+        """Reyting sahifalash uchun tasdiqlangan faol foydalanuvchilar soni"""
+        async with self.pool.acquire() as conn:
+            val = await conn.fetchval("SELECT COUNT(*) FROM users WHERE is_verified = 1 AND status = 'active'")
+            return val or 0
+
+    async def set_contest_status(self, contest_id: int, status: str):
+        """Tanlov holatini o'zgartirish (masalan: 'running' yoki 'ended')"""
+        async with self.pool.acquire() as conn:
+            await conn.execute("UPDATE contests SET status = $1 WHERE id = $2", status, contest_id)
+
     async def get_leaderboard(self, limit: int = 10, offset: int = 0) -> List[Dict[str, Any]]:
         """Reyting ro'yxati (kamida 20 ta taklif talabi bo'yicha da'vogarlik ko'rsatiladi)"""
         async with self.pool.acquire() as conn:

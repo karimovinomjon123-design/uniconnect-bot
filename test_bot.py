@@ -15,7 +15,7 @@ class TestUniConnectBotComprehensive(unittest.IsolatedAsyncioTestCase):
                 os.remove(self.test_db_path)
             except Exception:
                 pass
-        self.db = Database(self.test_db_path)
+        self.db = Database(self.test_db_path, force_sqlite=True)
         await self.db.init_db()
 
     async def asyncTearDown(self):
@@ -162,6 +162,19 @@ class TestUniConnectBotComprehensive(unittest.IsolatedAsyncioTestCase):
         backup_str = await create_json_backup(self.db)
         self.assertIn("UniConnect UZ Telegram Bot", backup_str)
         self.assertIn("6001", backup_str)
+
+    async def test_07_active_participants_count_and_context_manager(self):
+        """Yangi get_active_participants_count va context manager interfeysini tekshirish"""
+        async with self.db as managed_db:
+            self.assertEqual(managed_db, self.db)
+
+        await self.db.add_user(7001, "act1", "Active 1")
+        await self.db.add_user(7002, "act2", "Active 2")
+        await self.db.verify_user_and_confirm_referral(7001)
+        await self.db.verify_user_and_confirm_referral(7002)
+
+        count = await self.db.get_active_participants_count()
+        self.assertTrue(count >= 2)
 
 if __name__ == "__main__":
     unittest.main()

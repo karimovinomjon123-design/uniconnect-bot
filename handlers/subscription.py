@@ -42,7 +42,7 @@ async def cb_check_subscription(callback: CallbackQuery, bot: Bot, db: Database)
         except Exception as e:
             logger.warning(f"Taklifchiga xabar yetkazishda xato: {e}")
 
-    is_admin = user.id in config.ADMIN_IDS
+    is_admin = config.is_admin(user.id)
     try:
         await callback.message.delete()
     except Exception:

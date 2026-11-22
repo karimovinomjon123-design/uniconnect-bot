@@ -478,6 +478,25 @@ class Database:
 
         return None, contest
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    async def get_active_participants_count(self) -> int:
+        """Reyting sahifalash uchun tasdiqlangan faol foydalanuvchilar soni"""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("SELECT COUNT(*) FROM users WHERE is_verified = 1 AND status = 'active'")
+            row = await cursor.fetchone()
+            return row[0] if row else 0
+
+    async def set_contest_status(self, contest_id: int, status: str):
+        """Tanlov holatini o'zgartirish (masalan: 'running' yoki 'ended')"""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("UPDATE contests SET status = ? WHERE id = ?", (status, contest_id))
+            await db.commit()
+
     async def get_leaderboard(self, limit: int = 10, offset: int = 0) -> List[Dict[str, Any]]:
         """
         Reyting ro'yxati.
@@ -782,3 +801,7 @@ class Database:
 
             cur = await db.execute("SELECT * FROM contests WHERE status = 'running' ORDER BY id DESC LIMIT 1")
             return dict(await cur.fetchone())
+
+    async def close(self):
+        """SQLite ulanishlarini toza yopish (moslik uchun)"""
+        pass

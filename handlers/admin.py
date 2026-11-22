@@ -25,13 +25,18 @@ class AdminStates(StatesGroup):
     confirm_broadcast = State()
     waiting_for_search_query = State()
 
-def is_admin(user_id: int) -> bool:
-    return user_id in config.ADMIN_IDS
+def is_admin(user_id: int | str | None) -> bool:
+    return config.is_admin(user_id)
 
 @router.message(Command("admin"))
 @router.message(F.text == "⚙️ Admin Panel")
 async def show_admin_panel(message: Message):
     if not is_admin(message.from_user.id):
+        await message.answer(
+            "⛔ <b>Kirish taqiqlandi!</b>\n\n"
+            "Ushbu bo'lim faqat tizim administratorlari uchun mo'ljallangan.",
+            parse_mode="HTML"
+        )
         return
 
     text = (
@@ -45,6 +50,7 @@ async def show_admin_panel(message: Message):
 @router.callback_query(F.data == "admin_stats")
 async def cb_admin_stats(callback: CallbackQuery, db: Database):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     stats = await db.get_stats()
@@ -78,6 +84,7 @@ async def cb_admin_stats(callback: CallbackQuery, db: Database):
 @router.callback_query(F.data == "admin_top")
 async def cb_admin_top(callback: CallbackQuery, db: Database):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     top_users = await db.get_leaderboard(limit=20)
@@ -103,6 +110,7 @@ async def cb_admin_top(callback: CallbackQuery, db: Database):
 @router.callback_query(F.data == "admin_export_csv")
 async def cb_export_csv(callback: CallbackQuery, db: Database):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     await callback.answer("CSV fayl tayyorlanmoqda...")
@@ -124,6 +132,7 @@ async def cb_export_csv(callback: CallbackQuery, db: Database):
 @router.callback_query(F.data == "admin_export_backup")
 async def cb_export_backup(callback: CallbackQuery, db: Database):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     await callback.answer("To'liq zaxira nusxasi (JSON) tayyorlanmoqda...")
@@ -148,6 +157,7 @@ async def cb_export_backup(callback: CallbackQuery, db: Database):
 @router.callback_query(F.data == "admin_suspicious")
 async def cb_admin_suspicious(callback: CallbackQuery, db: Database):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     logs = await db.get_suspicious_logs(limit=25)
@@ -172,6 +182,7 @@ async def cb_admin_suspicious(callback: CallbackQuery, db: Database):
 @router.callback_query(F.data == "admin_search")
 async def cb_admin_search(callback: CallbackQuery, state: FSMContext):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     await state.set_state(AdminStates.waiting_for_search_query)
@@ -185,9 +196,13 @@ async def cb_admin_search(callback: CallbackQuery, state: FSMContext):
 
 @router.message(AdminStates.waiting_for_search_query)
 async def process_search_query(message: Message, state: FSMContext, db: Database):
+    if not is_admin(message.from_user.id):
+        await state.clear()
+        return
+
     if message.text == "❌ Bekor qilish":
         await state.clear()
-        await message.answer("Bekor qilindi.", reply_markup=get_main_keyboard(is_admin=True))
+        await message.answer("Bekor qilindi.", reply_markup=get_main_keyboard(is_admin=is_admin(message.from_user.id)))
         return
 
     query = message.text.strip()
@@ -229,13 +244,14 @@ async def process_search_query(message: Message, state: FSMContext, db: Database
             credit_str = " (Tanlovga hisoblangan)" if r['is_contest_credit'] else ""
             lines.append(f"• {status_ico} {name} (ID: <code>{r['referred_id']}</code>) — {r['status']}{credit_str}")
 
-    await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=get_main_keyboard(is_admin=True))
+    await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=get_main_keyboard(is_admin=is_admin(message.from_user.id)))
 
 # ================= TANLOVNI BOSHQARISH VA TASDIQLASH =================
 
 @router.callback_query(F.data == "admin_contest_menu")
 async def cb_contest_menu(callback: CallbackQuery, db: Database):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     contest = await db.get_active_contest()
@@ -255,6 +271,7 @@ async def cb_contest_menu(callback: CallbackQuery, db: Database):
 @router.callback_query(F.data == "ask_start_contest")
 async def cb_ask_start(callback: CallbackQuery):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
     await callback.message.edit_text(
         "⚠️ <b>Haqiqatan ham tanlovni muddatidan oldin HOZIR faollashtirmoqchimisiz?</b>\n\n"
@@ -267,14 +284,12 @@ async def cb_ask_start(callback: CallbackQuery):
 @router.callback_query(F.data == "confirm_start_contest_now")
 async def cb_confirm_start(callback: CallbackQuery, db: Database):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     contest = await db.get_active_contest()
     if contest:
-        import aiosqlite
-        async with aiosqlite.connect(db.db_path) as conn:
-            await conn.execute("UPDATE contests SET status = 'running' WHERE id = ?", (contest["id"],))
-            await conn.commit()
+        await db.set_contest_status(contest["id"], "running")
 
         await db.log_admin_action(callback.from_user.id, "MANUAL_START_CONTEST", f"Contest ID: {contest['id']}")
         await callback.message.edit_text(
@@ -287,6 +302,7 @@ async def cb_confirm_start(callback: CallbackQuery, db: Database):
 @router.callback_query(F.data == "ask_end_contest")
 async def cb_ask_end(callback: CallbackQuery):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
     await callback.message.edit_text(
         "⚠️ <b>Tanlovni hozir yakunlab, g'oliblarni aniqlashni tasdiqlaysizmi?</b>\n\n"
@@ -299,6 +315,7 @@ async def cb_ask_end(callback: CallbackQuery):
 @router.callback_query(F.data == "confirm_end_contest_now")
 async def cb_confirm_end(callback: CallbackQuery, db: Database):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     contest = await db.get_active_contest()
@@ -333,6 +350,7 @@ async def cb_confirm_end(callback: CallbackQuery, db: Database):
 @router.callback_query(F.data == "ask_new_season")
 async def cb_ask_new_season(callback: CallbackQuery):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
     await callback.message.edit_text(
         "⚠️ <b>Yangi 7 kunlik mavsumni boshlashni tasdiqlaysizmi?</b>\n\n"
@@ -345,6 +363,7 @@ async def cb_ask_new_season(callback: CallbackQuery):
 @router.callback_query(F.data == "confirm_start_new_season")
 async def cb_confirm_new_season(callback: CallbackQuery, db: Database):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     new_contest = await db.start_new_season_contest(duration_days=7)
@@ -364,6 +383,7 @@ async def cb_confirm_new_season(callback: CallbackQuery, db: Database):
 @router.callback_query(F.data == "admin_back")
 async def cb_admin_back(callback: CallbackQuery):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
     text = (
         "⚙️ <b>UniConnect UZ — Administrator Boshqaruv Paneli</b>\n\n"
@@ -377,6 +397,7 @@ async def cb_admin_back(callback: CallbackQuery):
 @router.callback_query(F.data == "admin_broadcast")
 async def cb_start_broadcast(callback: CallbackQuery, state: FSMContext):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     await state.set_state(AdminStates.waiting_for_broadcast_message)
@@ -391,9 +412,13 @@ async def cb_start_broadcast(callback: CallbackQuery, state: FSMContext):
 
 @router.message(AdminStates.waiting_for_broadcast_message)
 async def process_broadcast_message(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        await state.clear()
+        return
+
     if message.text == "❌ Bekor qilish":
         await state.clear()
-        await message.answer("Xabar tarqatish bekor qilindi.", reply_markup=get_main_keyboard(is_admin=True))
+        await message.answer("Xabar tarqatish bekor qilindi.", reply_markup=get_main_keyboard(is_admin=is_admin(message.from_user.id)))
         return
 
     await state.update_data(
@@ -411,6 +436,7 @@ async def process_broadcast_message(message: Message, state: FSMContext):
 @router.callback_query(AdminStates.confirm_broadcast, F.data == "broadcast_confirm")
 async def cb_confirm_broadcast(callback: CallbackQuery, state: FSMContext, bot: Bot, db: Database):
     if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
         return
 
     data = await state.get_data()
@@ -424,7 +450,7 @@ async def cb_confirm_broadcast(callback: CallbackQuery, state: FSMContext, bot: 
     status_msg = await callback.message.answer(
         f"🚀 Xabar tarqatish boshlandi... Jami qabul qiluvchilar: <b>{total_users} ta</b>.",
         parse_mode="HTML",
-        reply_markup=get_main_keyboard(is_admin=True)
+        reply_markup=get_main_keyboard(is_admin=is_admin(callback.from_user.id))
     )
 
     sent = 0
@@ -453,12 +479,18 @@ async def cb_confirm_broadcast(callback: CallbackQuery, state: FSMContext, bot: 
 
 @router.callback_query(AdminStates.confirm_broadcast, F.data == "broadcast_cancel")
 async def cb_cancel_broadcast(callback: CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
+        return
     await state.clear()
     await callback.message.edit_text("❌ Xabar tarqatish bekor qilindi.")
     await callback.answer()
 
 @router.callback_query(F.data == "admin_close")
 async def cb_admin_close(callback: CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Ruxsat berilmagan! Siz administrator emassiz.", show_alert=True)
+        return
     try:
         await callback.message.delete()
     except Exception:

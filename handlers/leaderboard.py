@@ -20,13 +20,8 @@ async def build_leaderboard_view(user_id: int, db: Database, page: int = 1):
     offset = (page - 1) * PAGE_SIZE
     top_users = await db.get_leaderboard(limit=PAGE_SIZE, offset=offset)
 
-    # Jami ishtirokchilar soni sahifalash uchun
-    async with db as _:
-        pass
-    import aiosqlite
-    async with aiosqlite.connect(db.db_path) as conn:
-        total_p_cur = await conn.execute("SELECT COUNT(*) FROM users WHERE is_verified = 1 AND status = 'active'")
-        total_participants = (await total_p_cur.fetchone())[0]
+    # Jami faol ishtirokchilar soni sahifalash uchun (Universal metod)
+    total_participants = await db.get_active_participants_count()
 
     total_pages = max(1, (total_participants + PAGE_SIZE - 1) // PAGE_SIZE)
     standing = await db.get_user_contest_standing(user_id)
