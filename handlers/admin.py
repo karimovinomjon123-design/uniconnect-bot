@@ -5,7 +5,8 @@ from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery, BufferedInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from database.db import Database
+from database.db import Database, get_tashkent_now
+from database.backup import create_json_backup
 from keyboards.inline import (
     get_admin_keyboard,
     get_admin_contest_menu_keyboard,
@@ -108,7 +109,7 @@ async def cb_export_csv(callback: CallbackQuery, db: Database):
     csv_data = await db.export_participants_csv()
     csv_bytes = csv_data.encode("utf-8-sig")  # Excel da to'g'ri ochilishi uchun UTF-8 BOM
 
-    filename = f"uniconnect_users_{config.get_tashkent_now().strftime('%Y%m%d_%H%M')}.csv"
+    filename = f"uniconnect_users_{get_tashkent_now().strftime('%Y%m%d_%H%M')}.csv"
     input_file = BufferedInputFile(csv_bytes, filename=filename)
 
     await callback.message.answer_document(
@@ -117,6 +118,30 @@ async def cb_export_csv(callback: CallbackQuery, db: Database):
         parse_mode="HTML"
     )
     await db.log_admin_action(callback.from_user.id, "EXPORT_CSV", f"Fayl: {filename}")
+
+# ================= JSON BAZA ZAXIRASI (BACKUP) =================
+
+@router.callback_query(F.data == "admin_export_backup")
+async def cb_export_backup(callback: CallbackQuery, db: Database):
+    if not is_admin(callback.from_user.id):
+        return
+
+    await callback.answer("To'liq zaxira nusxasi (JSON) tayyorlanmoqda...")
+    json_data = await create_json_backup(db)
+    json_bytes = json_data.encode("utf-8")
+
+    filename = f"uniconnect_full_backup_{get_tashkent_now().strftime('%Y%m%d_%H%M%S')}.json"
+    input_file = BufferedInputFile(json_bytes, filename=filename)
+
+    await callback.message.answer_document(
+        document=input_file,
+        caption=(
+            "💾 <b>UniConnect UZ — Ma'lumotlar Bazasi To'liq Zaxirasi (JSON)</b>\n\n"
+            "Ushbu fayl barcha foydalanuvchilar, referrallar, tanlov sozlamalari va loglarni o'z ichiga oladi."
+        ),
+        parse_mode="HTML"
+    )
+    await db.log_admin_action(callback.from_user.id, "EXPORT_JSON_BACKUP", f"Fayl: {filename}")
 
 # ================= SHUBHALI FAOLLIKNI KO'RISH =================
 

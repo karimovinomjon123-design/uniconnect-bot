@@ -54,6 +54,7 @@ PRIZE_1 = "3 oylik Telegram Premium"
 PRIZE_2 = "50,000 UZS"
 PRIZE_3 = "30,000 UZS"
 
-# Ma'lumotlar bazasi
+# Ma'lumotlar bazasi (Dual-engine: PostgreSQL yoki SQLite)
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 DB_NAME = os.getenv("DB_NAME", "uniconnect.db").strip()
 DB_PATH = BASE_DIR / DB_NAME

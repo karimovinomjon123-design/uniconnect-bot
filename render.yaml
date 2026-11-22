@@ -9,6 +9,8 @@ services:
     envVars:
       - key: BOT_TOKEN
         sync: false
+      - key: DATABASE_URL
+        sync: false
       - key: ADMIN_IDS
         value: "8786525548,7557420301"
       - key: REQUIRED_CHANNEL

@@ -155,5 +155,13 @@ class TestUniConnectBotComprehensive(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(len(logs) >= 1)
         self.assertEqual(logs[0]["admin_id"], 8786525548)
 
+    async def test_06_json_backup(self):
+        """Ma'lumotlar bazasining JSON zaxira nusxasini tekshirish"""
+        from database.backup import create_json_backup
+        await self.db.add_user(6001, "backup_tester", "Backup Test Foydalanuvchisi")
+        backup_str = await create_json_backup(self.db)
+        self.assertIn("UniConnect UZ Telegram Bot", backup_str)
+        self.assertIn("6001", backup_str)
+
 if __name__ == "__main__":
     unittest.main()

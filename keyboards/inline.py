@@ -81,10 +81,13 @@ def get_admin_keyboard() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="📥 CSV Eksport", callback_data="admin_export_csv"),
-            InlineKeyboardButton(text="⚠️ Shubhali faollik", callback_data="admin_suspicious"),
+            InlineKeyboardButton(text="💾 JSON Zaxira (Backup)", callback_data="admin_export_backup"),
         ],
         [
+            InlineKeyboardButton(text="⚠️ Shubhali faollik", callback_data="admin_suspicious"),
             InlineKeyboardButton(text="⚙️ Tanlovni boshqarish", callback_data="admin_contest_menu"),
+        ],
+        [
             InlineKeyboardButton(text="❌ Yopish", callback_data="admin_close")
         ]
     ])
