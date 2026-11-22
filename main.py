@@ -2,6 +2,7 @@ import os
 import asyncio
 import logging
 import sys
+import aiohttp
 from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -73,6 +74,27 @@ async def competition_scheduler_task(bot: Bot, db: Database):
 
         await asyncio.sleep(30)
 
+async def keep_alive_ping_task():
+    """
+    Render Free Web Service uxlab qolmasligi uchun avtomatik o'z-o'zini uyg'otish vazifasi.
+    Render avtomatik tarzda RENDER_EXTERNAL_URL muhit o'zgaruvchisini taqdim etadi.
+    Har 9 daqiqada (540 soniya) tashqi domen orqali /health manziliga so'rov yuborib turadi.
+    """
+    ext_url = os.getenv("RENDER_EXTERNAL_URL")
+    if not ext_url:
+        return
+    health_url = f"{ext_url.rstrip('/')}/health"
+    logger.info(f"Keep-alive avtomatik ping tizimi yoqildi: {health_url}")
+    while True:
+        await asyncio.sleep(540)  # Render 15 daqiqada uxlaydi, 9 daqiqa xavfsiz oraliq
+        try:
+            timeout = aiohttp.ClientTimeout(total=15)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(health_url) as resp:
+                    logger.info(f"Keep-alive ping muvaffaqiyatli: HTTP {resp.status}")
+        except Exception as e:
+            logger.warning(f"Keep-alive ping ogohlantirish: {e}")
+
 async def main():
     logger.info("UniConnect UZ Telegram Boti ishga tushirilmoqda...")
 
@@ -129,12 +151,14 @@ async def main():
 
     # Tanlov avtomatizatsiyasi uchun scheduler vazifasini ishga tushirish
     scheduler_task = asyncio.create_task(competition_scheduler_task(bot, db))
+    ping_task = asyncio.create_task(keep_alive_ping_task())
 
     logger.info("UniConnect UZ boti 24/7 to'liq faol rejimda ishlamoqda. To'xtatish uchun Ctrl+C bosing.")
     try:
         await dp.start_polling(bot)
     finally:
         scheduler_task.cancel()
+        ping_task.cancel()
         if web_runner:
             await web_runner.cleanup()
         await bot.session.close()
