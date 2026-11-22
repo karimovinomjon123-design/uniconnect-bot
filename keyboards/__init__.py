@@ -5,6 +5,8 @@ from .inline import (
     get_leaderboard_keyboard,
     get_contact_keyboard,
     get_admin_keyboard,
+    get_admin_contest_menu_keyboard,
+    get_confirm_keyboard,
     get_broadcast_confirm_keyboard
 )
 
@@ -16,5 +18,7 @@ __all__ = [
     "get_leaderboard_keyboard",
     "get_contact_keyboard",
     "get_admin_keyboard",
+    "get_admin_contest_menu_keyboard",
+    "get_confirm_keyboard",
     "get_broadcast_confirm_keyboard"
 ]

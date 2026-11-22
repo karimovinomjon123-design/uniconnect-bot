@@ -17,24 +17,25 @@ async def cb_check_subscription(callback: CallbackQuery, bot: Bot, db: Database)
     if not is_all_ok:
         missing_names = ", ".join([item[1] for item in missing])
         await callback.answer(
-            f"⚠️ Siz hali quyidagi sahifalarga a'zo bo'lmadingiz:\n{missing_names}\n\nIltimos, a'zo bo'lib qayta tekshiring!",
+            f"Siz hali quyidagi sahifalarga a'zo bo'lmadingiz:\n{missing_names}\n\nIltimos, a'zo bo'lib qayta tekshiring!",
             show_alert=True
         )
         return
 
-    await callback.answer("✅ Barcha sahifalarga a'zoligingiz tasdiqlandi!", show_alert=False)
+    await callback.answer("A'zoligingiz tasdiqlandi!", show_alert=False)
 
     # Referralni tasdiqlash
-    _, ref_id, new_count = await db.verify_user_and_confirm_referral(user.id)
+    _, ref_id, new_count, credited_to_contest = await db.verify_user_and_confirm_referral(user.id)
     if ref_id and ref_id != user.id:
         try:
+            contest_note = "🏆 <b>Tanlov hisobingizga +1 ball qo'shildi!</b>" if credited_to_contest else "ℹ️ <i>(Tanlov boshlangach ballar tanlov hisobiga yoziladi)</i>"
             await bot.send_message(
                 chat_id=ref_id,
                 text=(
                     f"🎉 <b>Tabriklaymiz!</b>\n\n"
-                    f"Sizning taklif havolangiz orqali <b>{user.full_name}</b> barcha sahifalarga a'zo bo'ldi va botni faollashtirdi!\n"
-                    f"Sizga <b>+1 ball</b> berildi.\n"
-                    f"🏆 Tanlovdagi joriy ballingiz: <b>{new_count} ta</b>."
+                    f"Sizning taklif havolangiz orqali <b>{user.full_name}</b> a'zolikni tasdiqladi.\n"
+                    f"{contest_note}\n"
+                    f"Tanlovdagi joriy ballingiz: <b>{new_count} ta</b>."
                 ),
                 parse_mode="HTML"
             )
@@ -48,9 +49,8 @@ async def cb_check_subscription(callback: CallbackQuery, bot: Bot, db: Database)
         pass
 
     await callback.message.answer(
-        "🎉 <b>A'zoligingiz to'liq tasdiqlandi!</b>\n\n"
-        "Endi siz do'stlaringizni taklif qilishingiz, reytingda yuqorilashingiz va "
-        "<b>Top 3 tanlovida qimmatbaho sovg'alarni</b> yutib olishingiz mumkin!\n\n"
+        "A'zoligingiz muvaffaqiyatli tasdiqlandi!\n\n"
+        f"🏆 <b>{config.COMPETITION_NAME}</b> da ishtirok etish uchun shaxsiy taklif havolangizdan foydalaning.\n\n"
         "Quyidagi menyudan kerakli bo'limni tanlang:",
         parse_mode="HTML",
         reply_markup=get_main_keyboard(is_admin=is_admin)

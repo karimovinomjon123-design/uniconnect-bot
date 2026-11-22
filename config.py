@@ -7,15 +7,18 @@ load_dotenv(BASE_DIR / ".env")
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
-# Admin IDs
-admin_ids_str = os.getenv("ADMIN_IDS", "7557420301")
+# Administratorlar Telegram ID raqamlari
+admin_ids_str = os.getenv("ADMIN_IDS", "7557420301,8786525548")
 ADMIN_IDS: list[int] = []
 for aid in admin_ids_str.split(","):
     aid_clean = aid.strip()
     if aid_clean.isdigit():
         ADMIN_IDS.append(int(aid_clean))
-if 7557420301 not in ADMIN_IDS:
-    ADMIN_IDS.append(7557420301)
+
+# Asosiy adminlar doimo ruxsatga ega bo'lishi kafolatlanadi
+for default_admin in [7557420301, 8786525548]:
+    if default_admin not in ADMIN_IDS:
+        ADMIN_IDS.append(default_admin)
 
 # Majburiy a'zo bo'lish kanali va guruhi
 REQUIRED_CHANNEL = os.getenv("REQUIRED_CHANNEL", "@uniconnectuz_official").strip()
@@ -37,6 +40,19 @@ INSTAGRAM_URL = os.getenv("INSTAGRAM_URL", "https://www.instagram.com/uniconnect
 SUPPORT_PHONE = os.getenv("SUPPORT_PHONE", "+998 70 320 88 00").strip()
 SUPPORT_ADMIN = os.getenv("SUPPORT_ADMIN", "@IKN150").strip()
 SUPPORT_ADMIN_URL = f"https://t.me/{SUPPORT_ADMIN.replace('@', '')}"
+
+# ================= 7 DAYS REFERRAL CHALLENGE KONFIGURATSIYASI =================
+COMPETITION_NAME = "UniConnect UZ — 7 DAYS REFERRAL CHALLENGE"
+# Asia/Tashkent (UTC+5) vaqti bo'yicha:
+# Boshlanish: 2026-yil 23-noyabr 00:00:00
+# Tugash: 2026-yil 29-noyabr 23:59:59
+COMPETITION_START_ISO = "2026-11-23T00:00:00+05:00"
+COMPETITION_END_ISO = "2026-11-29T23:59:59+05:00"
+MIN_REFERRALS_FOR_PRIZE = 20
+
+PRIZE_1 = "3 oylik Telegram Premium"
+PRIZE_2 = "50,000 UZS"
+PRIZE_3 = "30,000 UZS"
 
 # Ma'lumotlar bazasi
 DB_NAME = os.getenv("DB_NAME", "uniconnect.db").strip()

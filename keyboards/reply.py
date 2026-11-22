@@ -1,16 +1,22 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 def get_main_keyboard(is_admin: bool = False) -> ReplyKeyboardMarkup:
-    """UniConnect asosiy menyu tugmalari"""
+    """UniConnect asosiy professional menyu tugmalari"""
     keyboard = [
         [
-            KeyboardButton(text="👥 Do'stlarni taklif qilish"),
+            KeyboardButton(text="🔗 Taklif havolam"),
+            KeyboardButton(text="📊 Mening statistikam"),
         ],
         [
-            KeyboardButton(text="🏆 Reyting (Top 10)"),
+            KeyboardButton(text="🏆 Reyting"),
+            KeyboardButton(text="🎁 Sovg'alar"),
         ],
         [
-            KeyboardButton(text="📊 Mening profilim"),
+            KeyboardButton(text="⏳ Tanlov holati"),
+            KeyboardButton(text="📜 Tanlov qoidalari"),
+        ],
+        [
+            KeyboardButton(text="👤 Mening profilim"),
             KeyboardButton(text="ℹ️ Loyiha haqida"),
         ],
         [
@@ -24,7 +30,7 @@ def get_main_keyboard(is_admin: bool = False) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=keyboard,
         resize_keyboard=True,
-        input_field_placeholder="Kerakli bo'limni tanlang..."
+        input_field_placeholder="Bo'limni tanlang..."
     )
 
 def get_cancel_keyboard() -> ReplyKeyboardMarkup:

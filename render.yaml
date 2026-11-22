@@ -10,7 +10,7 @@ services:
       - key: BOT_TOKEN
         sync: false
       - key: ADMIN_IDS
-        value: "7557420301"
+        value: "8786525548,7557420301"
       - key: REQUIRED_CHANNEL
         value: "@uniconnectuz_official"
       - key: REQUIRED_GROUP

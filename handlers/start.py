@@ -23,7 +23,7 @@ async def cmd_start(message: Message, command: CommandObject, bot: Bot, db: Data
         if ref_candidate.isdigit():
             referrer_id = int(ref_candidate)
 
-    # Foydalanuvchini bazaga qo'shish
+    # Foydalanuvchini bazaga qo'shish (takroriy ro'yxatdan o'tish tekshiriladi)
     is_new = await db.add_user(
         user_id=user.id,
         username=user.username,
@@ -34,17 +34,18 @@ async def cmd_start(message: Message, command: CommandObject, bot: Bot, db: Data
     if is_new:
         logger.info(f"Yangi foydalanuvchi: {user.id} (@{user.username}), taklifchi: {referrer_id}")
 
-    # Barcha majburiy kanal va guruhlarni tekshiramiz
+    # Majburiy kanal va guruh a'zoligini tekshirish
     is_all_ok, missing = await check_all_subscriptions(bot, user.id)
 
     if not is_all_ok:
         welcome_text = (
-            f"👋 <b>Assalomu alaykum, {user.full_name}!</b>\n\n"
-            "🌟 <b>UniConnect</b> — O'zbekiston talabalari hamjamiyatining rasmiy botiga xush kelibsiz!\n\n"
-            "🚀 <b>Hozirda 7 kunlik katta talabalar marafon-konkursi o'tkazilmoqda!</b>\n"
-            "🎁 G'oliblar uchun maxsus sovg'alar rasmiy kanalimiz orqali e'lon qilinadi!\n\n"
-            "⚠️ <b>Botdan to'liq foydalanish, do'stlaringizni taklif qilish va tanlovda qatnashish uchun "
-            "rasmiy kanal va guruhimizga a'zo bo'ling:</b>"
+            f"Assalomu alaykum, {user.full_name}!\n\n"
+            f"🌟 <b>UniConnect UZ</b> platformasining rasmiy botiga xush kelibsiz.\n\n"
+            f"🏆 <b>{config.COMPETITION_NAME}</b>\n"
+            "📅 <b>Muddat:</b> 23-noyabr 00:00 dan 29-noyabr 23:59:59 gacha (7 kun)\n"
+            f"🎁 <b>Bosh sovrin:</b> {config.PRIZE_1}\n"
+            "⚠️ <b>Muhim shart:</b> Sovg'aga da'vogar bo'lish uchun kamida <b>20 ta valid referral</b> taklif qilish shart!\n\n"
+            "Botdan foydalanish va tanlovda qatnashish uchun rasmiy kanal va guruhimizga a'zo bo'ling:"
         )
         await message.answer(
             welcome_text,
@@ -54,17 +55,18 @@ async def cmd_start(message: Message, command: CommandObject, bot: Bot, db: Data
         )
         return
 
-    # Agar a'zo bo'lsa, tasdiqlaymiz va referralni hisoblaymiz
-    _, ref_id, new_count = await db.verify_user_and_confirm_referral(user.id)
+    # A'zo bo'lsa, referral holatini tasdiqlaymiz
+    _, ref_id, new_count, credited_to_contest = await db.verify_user_and_confirm_referral(user.id)
     if ref_id and ref_id != user.id:
         try:
+            contest_note = "🏆 <b>Tanlov hisobingizga +1 ball qo'shildi!</b>" if credited_to_contest else "ℹ️ <i>(Tanlov boshlangach ballar tanlov hisobiga yoziladi)</i>"
             await bot.send_message(
                 chat_id=ref_id,
                 text=(
                     f"🎉 <b>Yangi do'st qo'shildi!</b>\n\n"
-                    f"Sizning taklif havolangiz orqali <b>{user.full_name}</b> botga kirdi va barcha sahifalarga a'zo bo'ldi!\n"
-                    f"Sizga <b>+1 ball</b> qo'shildi!\n"
-                    f"🏆 Tanlovdagi joriy ballingiz: <b>{new_count} ta</b>."
+                    f"Sizning taklif havolangiz orqali <b>{user.full_name}</b> rasmiy sahifalarimizga a'zo bo'ldi.\n"
+                    f"{contest_note}\n"
+                    f"Tanlovdagi joriy ballingiz: <b>{new_count} ta</b>."
                 ),
                 parse_mode="HTML"
             )
@@ -73,10 +75,10 @@ async def cmd_start(message: Message, command: CommandObject, bot: Bot, db: Data
 
     is_admin = user.id in config.ADMIN_IDS
     await message.answer(
-        f"👋 <b>Assalomu alaykum, {user.full_name}!</b>\n\n"
-        "🎉 <b>UniConnect</b> talabalar platformasiga xush kelibsiz!\n\n"
-        "Quyidagi menyu orqali do'stlaringizni taklif qiling, tanlovda ishtirok eting va "
-        "qimmatbaho sovg'alarga ega bo'ling 👇",
+        f"Assalomu alaykum, {user.full_name}!\n\n"
+        "🌟 <b>UniConnect UZ</b> talabalar hamjamiyatiga xush kelibsiz.\n"
+        f"🏆 <b>{config.COMPETITION_NAME}</b> da ishtirok eting va sovg'alarni qo'lga kiriting!\n\n"
+        "Quyidagi menyu orqali kerakli bo'limni tanlang:",
         parse_mode="HTML",
         reply_markup=get_main_keyboard(is_admin=is_admin)
     )

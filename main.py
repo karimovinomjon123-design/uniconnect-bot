@@ -24,8 +24,8 @@ logging.basicConfig(
 logger = logging.getLogger("uniconnect_bot")
 
 async def handle_health(request):
-    """Bulutli serverlar (Render, Railway, Koyeb) uchun 24/7 tiriklik tekshiruvi"""
-    return web.Response(text="UniConnect Bot is active and running 24/7! 🚀", status=200)
+    """Bulutli serverlar uchun 24/7 tiriklik tekshiruvi"""
+    return web.Response(text="UniConnect UZ Bot is active and running 24/7! 🚀", status=200)
 
 async def start_health_server():
     """Agar PORT muhit o'zgaruvchisi berilgan bo'lsa (serverda), health-check web serverni yoqadi"""
@@ -47,8 +47,34 @@ async def start_health_server():
         logger.warning(f"Health-check serverini yoqishda ogohlantirish: {e}")
         return None
 
+async def competition_scheduler_task(bot: Bot, db: Database):
+    """
+    Doimiy orqa fon vazifasi (Background Scheduler):
+    Har 30 soniyada tanlov vaqtini tekshiradi va rejalashtirilgan vaqtda
+    avtomatik faollashtiradi yoki yakunlab g'oliblarni aniqlaydi.
+    Bot o'chib-yonsa ham avtomatik tiklanadi.
+    """
+    logger.info("Tanlov jadvali va vaqt monitoringi (Background Scheduler) ishga tushdi.")
+    while True:
+        try:
+            action, contest = await db.sync_contest_status()
+            if action == "finalized" and contest:
+                logger.info(f"Tanlov avtomatik yakunlandi: {contest['title']}")
+                # Adminlarga xabar berish
+                winners = await db.get_winners(contest["id"])
+                win_text = f"🏁 <b>{contest['title']} rasman yakunlandi!</b>\n\nAniqlangan g'oliblar soni: <b>{len(winners)} ta</b>."
+                for aid in config.ADMIN_IDS:
+                    try:
+                        await bot.send_message(chat_id=aid, text=win_text, parse_mode="HTML")
+                    except Exception:
+                        pass
+        except Exception as e:
+            logger.error(f"Scheduler xatoligi: {e}")
+
+        await asyncio.sleep(30)
+
 async def main():
-    logger.info("UniConnect Telegram Boti ishga tushirilmoqda...")
+    logger.info("UniConnect UZ Telegram Boti ishga tushirilmoqda...")
 
     if not config.BOT_TOKEN or config.BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
         logger.error(
@@ -57,12 +83,12 @@ async def main():
         )
         return
 
-    # Ma'lumotlar bazasini ishga tushirish va yangilash
+    # Ma'lumotlar bazasini ishga tushirish va jadvallarni yangilash
     db = Database(config.DB_PATH)
     await db.init_db()
     logger.info(f"SQLite ma'lumotlar bazasi tayyor: {config.DB_PATH}")
 
-    # Server health-check ni yoqish (agar serverda bo'lsa)
+    # Server health-check ni yoqish (agar bulutli hostingda bo'lsa)
     web_runner = await start_health_server()
 
     # Bot va Dispatcher yaratish
@@ -84,7 +110,7 @@ async def main():
     dp.message.middleware(SubscriptionCheckMiddleware())
     dp.callback_query.middleware(SubscriptionCheckMiddleware())
 
-    # Handlerlarni ulash
+    # Barcha handlerlarni ulash
     register_all_handlers(dp)
 
     try:
@@ -100,10 +126,14 @@ async def main():
     # Eski kutilayotgan yangilanishlarni tozalash
     await bot.delete_webhook(drop_pending_updates=True)
 
-    logger.info("UniConnect boti 24/7 faol ishlamoqda. To'xtatish uchun Ctrl+C bosing.")
+    # Tanlov avtomatizatsiyasi uchun scheduler vazifasini ishga tushirish
+    scheduler_task = asyncio.create_task(competition_scheduler_task(bot, db))
+
+    logger.info("UniConnect UZ boti 24/7 to'liq faol rejimda ishlamoqda. To'xtatish uchun Ctrl+C bosing.")
     try:
         await dp.start_polling(bot)
     finally:
+        scheduler_task.cancel()
         if web_runner:
             await web_runner.cleanup()
         await bot.session.close()
